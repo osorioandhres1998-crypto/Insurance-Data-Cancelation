@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard Cancelaciones 2024-2026</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    /* Reset y Variables Globales */
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #f1f5f9; /* Fondo claro y suave */
+      color: #334155; /* Texto principal oscuro y suave */
+      min-height: 100vh;
+      padding: 40px 24px;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Cabecera */
+    .header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    
+    .header h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    
+    .header p { 
+      font-size: 14px; 
+      color: #64748b; 
+      margin-top: 6px; 
+      font-weight: 500;
+    }
+    
+    .badge {
+      display: inline-block;
+      background: #fee2e2;
+      color: #ef4444;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      margin-top: 12px;
+      letter-spacing: 0.5px;
+      border: 1px solid #fecaca;
+      box-shadow: 0 1px 2px rgba(239, 68, 68, 0.05);
+    }
+
+    /* Grid de KPIs */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    
+    .kpi-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 6px;
+      height: 100%;
+    }
+
+    .kpi-card.y24::before { background-color: #3b82f6; }
+    .kpi-card.y25::before { background-color: #f59e0b; }
+    .kpi-card.y26::before { background-color: #ef4444; }
+    
+    .kpi-label { 
+      font-size: 12px; 
+      color: #64748b; 
+      font-weight: 700; 
+      text-transform: uppercase; 
+      letter-spacing: 0.8px; 
+    }
+    
+    .kpi-value { 
+      font-size: 42px; 
+      font-weight: 800; 
+      margin: 10px 0 6px; 
+      line-height: 1; 
+      letter-spacing: -1px;
+    }
+    
+    .y24 .kpi-value { color: #2563eb; }
+    .y25 .kpi-value { color: #d97706; }
+    .y26 .kpi-value { color: #dc2626; }
+    
+    .kpi-sub { 
+      font-size: 13px; 
+      color: #64748b; 
+      font-weight: 500;
+    }
+    
+    .kpi-delta { 
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px; 
+      font-weight: 600; 
+      margin-top: 12px; 
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    .kpi-delta.up { 
+      color: #b91c1c; 
+      background: #fef2f2;
+      border: 1px solid #fee2e2;
+    }
+    
+    .kpi-delta.neutral { 
+      color: #475569; 
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* Caja de Alerta */
+    .alert-box {
+      background: #fff5f5;
+      border: 1px solid #fecaca;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+    }
+    
+    .alert-icon { 
+      font-size: 32px; 
+      line-height: 1;
+      flex-shrink: 0; 
+    }
+    
+    .alert-title { 
+      font-size: 15px; 
+      font-weight: 700; 
+      color: #991b1b; 
+      margin-bottom: 6px; 
+    }
+    
+    .alert-text { 
+      font-size: 14px; 
+      color: #7f1d1d; 
+      line-height: 1.6; 
+    }
+    
+    .alert-text strong { 
+      color: #1e293b; 
+      background-color: rgba(239, 68, 68, 0.08);
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+
+    /* Sección de Gráficos */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .charts-row {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .chart-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    }
+    
+    .chart-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    canvas { 
+      max-height: 250px; 
+      width: 100% !important;
+    }
+
+    /* Caja de Proyecciones */
+    .proj-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      border: 1px dashed #cbd5e1;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+    }
+    
+    .proj-title { 
+      font-size: 14px; 
+      font-weight: 700; 
+      color: #0f172a; 
+      margin-bottom: 18px; 
+    }
+    
+    .proj-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); 
+      gap: 16px; 
+    }
+    
+    .proj-item { 
+      background: #f8fafc; 
+      border-radius: 12px; 
+      padding: 20px; 
+      text-align: center; 
+      border: 1px solid #f1f5f9;
+      transition: background-color 0.2s ease;
+    }
+
+    .proj-item:hover {
+      background: #f1f5f9;
+    }
+    
+    .proj-item-label { 
+      font-size: 12px; 
+      color: #64748b; 
+      font-weight: 600;
+      margin-bottom: 8px; 
+    }
+    
+    .proj-item-val { 
+      font-size: 28px; 
+      font-weight: 800; 
+    }
+    
+    .red { color: #ef4444; }
+    .orange { color: #f97316; }
+    .yellow { color: #eab308; }
+    
+    .proj-item-sub { 
+      font-size: 11px; 
+      color: #64748b; 
+      margin-top: 6px; 
+      font-weight: 500;
+    }
+
+    /* Footer */
+    .footer { 
+      text-align: center; 
+      font-size: 12px; 
+      color: #64748b; 
+      margin-top: 24px; 
+      padding-top: 16px;
+      border-top: 1px solid #e2e8f0;
+    }
+    
+    .footer strong { 
+      color: #334155; 
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>📊 Dashboard — Cancelaciones de Seguros Médicos por Solicitud del Cliente</h1>
+    <p>Agencia de Seguros Médicos &nbsp;·&nbsp; Periodo 2024 – Mayo 2026</p>
+    <span class="badge">⚠ TENDENCIA CRÍTICA AL ALZA</span>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card y24">
+      <div class="kpi-label">Año 2024</div>
+      <div class="kpi-value">1,063</div>
+      <div class="kpi-sub">Año completo · 12 meses</div>
+      <div class="kpi-delta neutral">↔ Línea base de referencia</div>
+    </div>
+    <div class="kpi-card y25">
+      <div class="kpi-label">Año 2025</div>
+      <div class="kpi-value">1,147</div>
+      <div class="kpi-sub">Año completo · 12 meses</div>
+      <div class="kpi-delta up">▲ +7.9% vs 2024 &nbsp;(+84 clientes)</div>
+    </div>
+    <div class="kpi-card y26">
+      <div class="kpi-label">2026 — Enero a Mayo</div>
+      <div class="kpi-value">959</div>
+      <div class="kpi-sub">Solo 5 meses transcurridos</div>
+      <div class="kpi-delta up">⚡ Ritmo: 191.8/mes</div>
+    </div>
+  </div>
+
+  <div class="alert-box">
+    <div class="alert-icon">🚨</div>
+    <div>
+      <div class="alert-title">Alerta crítica: el ritmo de 2026 supera el doble del promedio de años anteriores</div>
+      <div class="alert-text">
+        Con <strong>959 cancelaciones en solo 5 meses</strong>, el promedio mensual de 2026 es <strong>191.8/mes</strong>, 
+        más del doble que 2024 (88.6/mes) y 2025 (95.6/mes). 
+        De continuar esta tendencia, se proyectan <strong>~2,302 cancelaciones al cierre de 2026</strong>, 
+        un incremento de <strong>+100.7% frente a 2025</strong>. 
+        Se recomienda intervención urgente para identificar las causas raíz y frenar la pérdida de cartera.
+      </div>
+    </div>
+  </div>
+
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">📈 Cancelaciones Totales por Año (Real vs Proyección)</div>
+      <canvas id="barChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">⚡ Promedio Mensual de Cancelaciones</div>
+      <canvas id="lineChart"></canvas>
+    </div>
+  </div>
+
+  <div class="proj-card">
+    <div class="proj-title">🔮 Proyección Anualizada 2026 — Si la tendencia continúa</div>
+    <div class="proj-grid">
+      <div class="proj-item">
+        <div class="proj-item-label">Cancelaciones estimadas al cierre 2026</div>
+        <div class="proj-item-val red">~2,302</div>
+        <div class="proj-item-sub">cancelaciones anuales proyectadas</div>
+      </div>
+      <div class="proj-item">
+        <div class="proj-item-label">Variación vs año 2025</div>
+        <div class="proj-item-val orange">+100.7%</div>
+        <div class="proj-item-sub">más del doble del año anterior</div>
+      </div>
+      <div class="proj-item">
+        <div class="proj-item-label">Mes estimado para igualar total 2024</div>
+        <div class="proj-item-val yellow">Julio 2026</div>
+        <div class="proj-item-sub">en apenas 7 meses del año</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nuevo gráfico de categorización de cancelaciones -->
+  <div class="chart-card" style="margin-bottom: 24px;">
+    <div class="chart-title">📋 Categorización de cancelaciones (Distribución % del Total)</div>
+    <div style="position: relative; min-height: 380px; width: 100%;">
+      <canvas id="categoryChart"></canvas>
+    </div>
+  </div>
+
+  <div class="footer">
+    <strong>Fuente:</strong> Registros internos &nbsp;·&nbsp; Categoría: Cancelación voluntaria por solicitud del cliente &nbsp;·&nbsp; Actualizado: Mayo 2026
+  </div>
+</div>
+
+<script>
+const barCtx = document.getElementById('barChart').getContext('2d');
+new Chart(barCtx, {
+  type: 'bar',
+  data: {
+    labels: ['2024 (12 meses)', '2025 (12 meses)', '2026 (5 meses)', '2026 (Proyectado)'],
+    datasets: [
+      {
+        label: 'Cancelaciones reales',
+        data: [1063, 1147, 959, null],
+        backgroundColor: ['#3b82f6dd', '#f59e0bdd', '#ef4444dd', 'transparent'],
+        borderColor: ['#2563eb', '#d97706', '#dc2626', 'transparent'],
+        borderWidth: 1.5,
+        borderRadius: 8,
+      },
+      {
+        label: 'Proyección 2026 (año completo)',
+        data: [null, null, null, 2302],
+        backgroundColor: '#fee2e2',
+        borderColor: '#ef4444',
+        borderWidth: 2,
+        borderRadius: 8,
+        borderDash: [6, 4],
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { 
+        labels: { 
+          color: '#475569', 
+          boxWidth: 12,
+          font: { size: 12, weight: '500' } 
+        } 
+      },
+      tooltip: { 
+        backgroundColor: '#1e293b',
+        titleColor: '#ffffff',
+        bodyColor: '#ffffff',
+        padding: 12,
+        cornerRadius: 8,
+        callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y ? c.parsed.y.toLocaleString() : 'N/A'}` } 
+      }
+    },
+    scales: {
+      x: { 
+        ticks: { color: '#64748b', font: { size: 11, weight: '500' } }, 
+        grid: { display: false } 
+      },
+      y: { 
+        ticks: { color: '#64748b', font: { size: 11 } }, 
+        grid: { color: '#e2e8f0' }, 
+        beginAtZero: true, 
+        max: 2700 
+      }
+    }
+  }
+});
+
+const lineCtx = document.getElementById('lineChart').getContext('2d');
+new Chart(lineCtx, {
+  type: 'line',
+  data: {
+    labels: ['2024', '2025', '2026*'],
+    datasets: [{
+      label: 'Cancelaciones / mes',
+      data: [88.6, 95.6, 191.8],
+      borderColor: '#f97316',
+      backgroundColor: 'rgba(249,115,22,0.06)',
+      pointBackgroundColor: ['#2563eb', '#d97706', '#dc2626'],
+      pointBorderColor: '#ffffff',
+      pointBorderWidth: 2,
+      pointRadius: 8,
+      pointHoverRadius: 10,
+      borderWidth: 3,
+      fill: true,
+      tension: 0.35
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { 
+        labels: { 
+          color: '#475569', 
+          boxWidth: 12,
+          font: { size: 12, weight: '500' } 
+        } 
+      },
+      tooltip: { 
+        backgroundColor: '#1e293b',
+        padding: 12,
+        cornerRadius: 8,
+        callbacks: { label: c => ` ${c.parsed.y} cancelaciones/mes` } 
+      }
+    },
+    scales: {
+      x: { 
+        ticks: { color: '#64748b', font: { size: 11, weight: '500' } }, 
+        grid: { display: false } 
+      },
+      y: { 
+        ticks: { 
+          color: '#64748b', 
+          font: { size: 11 },
+          callback: v => v + '/m' 
+        }, 
+        grid: { color: '#e2e8f0' }, 
+        beginAtZero: true 
+      }
+    }
+  }
+});
+
+// Inicialización del nuevo gráfico de categorización de cancelaciones
+const catCtx = document.getElementById('categoryChart').getContext('2d');
+new Chart(catCtx, {
+  type: 'bar',
+  data: {
+    labels: [
+      'Captado por otro agente/agencia',
+      'Sin motivo registrado',
+      'Obtuvo seguro por el trabajo',
+      'Calificó para Medicaid/Medicare',
+      'Otros motivos (no especificados)',
+      'No desea el seguro / motivos personales',
+      'No se logró contactar',
+      'Falta de documentos/estatus',
+      'Precio/prima muy alta',
+      'Adquirió otro seguro / cambió de compañía'
+    ],
+    datasets: [{
+      label: 'Porcentaje del total (%)',
+      data: [25.93, 24.48, 11.29, 7.79, 6.38, 6.06, 5.11, 4.95, 4.04, 3.97],
+      backgroundColor: [
+        '#3b82f6dd', 
+        '#64748bdd', 
+        '#10b981dd', 
+        '#8b5cf6dd', 
+        '#cbd5e1dd',
+        '#ec4899dd', 
+        '#f59e0bdd', 
+        '#14b8a6dd', 
+        '#ef4444dd', 
+        '#06b6d4dd'
+      ],
+      borderColor: [
+        '#2563eb', 
+        '#475569', 
+        '#059669', 
+        '#7c3aed', 
+        '#94a3b8',
+        '#db2777', 
+        '#d97706', 
+        '#0d9488', 
+        '#dc2626', 
+        '#0891b2'
+      ],
+      borderWidth: 1.5,
+      borderRadius: 6
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1e293b',
+        titleColor: '#ffffff',
+        bodyColor: '#ffffff',
+        padding: 12,
+        cornerRadius: 8,
+        callbacks: {
+          label: c => ` ${c.parsed.x}% del total de cancelaciones`
+        }
+      }
+    },
+    scales: {
+      x: {
+        ticks: { 
+          color: '#64748b', 
+          font: { size: 11, weight: '500' },
+          callback: v => v + '%'
+        },
+        grid: { color: '#e2e8f0' },
+        max: 30
+      },
+      y: {
+        ticks: { 
+          color: '#334155', 
+          font: { size: 11, weight: '600' } 
+        },
+        grid: { display: false }
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>
